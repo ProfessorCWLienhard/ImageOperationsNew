@@ -1,0 +1,189 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package imageoperations;
+
+import javafx.application.Application;
+import javafx.beans.property.ObjectProperty;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.Cursor;
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.*;
+import javafx.scene.image.*;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
+import javafx.scene.input.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.input.Clipboard;
+import javafx.scene.layout.BorderPane;
+
+/**
+ *
+ * @author 55clienhar
+ */
+public class ImageOperations extends Application {
+        Double firstx = 0.0;
+        Double firsty = 0.0;
+        Boolean firstPoint = true;
+        Rectangle rect1;
+        Canvas c1;
+        Group group1;
+        
+    @Override
+    public void start(Stage primaryStage) {
+        ScrollPane sc1 = new ScrollPane();
+
+        group1 = new Group();
+        
+        sc1.setContent(group1);
+        
+        c1 = new Canvas();
+        c1.setWidth(2000.);
+        c1.setHeight(1500.);
+      
+        GraphicsContext g1 = c1.getGraphicsContext2D();
+        g1.setFill(Color.BLACK);
+        g1.fillOval(300, 300, 100, 50);
+        group1.getChildren().add(0, c1);
+
+        
+        
+        c1.setOnMouseDragged(new EventHandler<MouseEvent>() {
+            public void handle(MouseEvent me) {
+                if(c1.getCursor() == Cursor.CROSSHAIR){
+                    if(firstPoint){
+                        firstPoint = false;
+                        firstx = me.getX();
+                        firsty = me.getY();
+                    }
+                
+                    Double ucX = firstx;
+                    Double ucY = firsty;
+                    Double scX = me.getX();
+                    Double scY = me.getY();
+                    Double scDX = scX - firstx;
+                    Double scDY = scY - firsty;
+                
+                    if(scDX < 0){
+                        ucX = scX;
+                        scDX = Math.abs(scDX);
+                    }
+                    if(scDY < 0){
+                        ucY = scY;
+                        scDY = Math.abs(scDY);
+                    }
+                 
+                    group1.getChildren().remove(1);
+                
+                    rect1 = new Rectangle(scDX, scDY);
+                    rect1.setX(ucX);
+                    rect1.setY(ucY);
+                    rect1.setFill(Color.TRANSPARENT);
+                    rect1.setStroke(Color.BLACK);
+                    group1.getChildren().add(1, rect1);
+
+                }
+            }
+        });
+        
+        c1.setOnMouseReleased(new EventHandler<MouseEvent>() {
+            public void handle(MouseEvent me) {
+                
+               firstPoint = true;
+               
+            }
+        });
+        
+        c1.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            public void handle(MouseEvent me) {
+                
+                if(group1.getChildren().size() > 1){
+                    group1.getChildren().remove(1);
+                    Rectangle rect2 = new Rectangle(0, 0);
+                    rect2.setFill(Color.TRANSPARENT);
+                    rect2.setStroke(Color.RED);
+                    group1.getChildren().add(1, rect2);
+
+                }
+               
+            }
+        });
+        
+        BorderPane borderPane = new BorderPane();
+        borderPane.setTop(secondMenuBar());
+        borderPane.setCenter(sc1);
+        
+        Scene scene = new Scene(borderPane, 400, 400);
+        
+        primaryStage.setTitle("Select Image Tool");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+        public MenuBar secondMenuBar() {
+            MenuBar myBar = new MenuBar();
+            final Menu editMenu = new Menu("Edit");
+            myBar.getMenus().addAll(editMenu);
+            
+            MenuItem copy = new MenuItem("Copy");
+            copy.setOnAction((ActionEvent e) -> {
+                
+                SnapshotParameters SSP1 = new SnapshotParameters();
+                Clipboard clipboard = Clipboard.getSystemClipboard();
+                ClipboardContent content = new ClipboardContent();
+                Rectangle2D r1 = new Rectangle2D(rect1.getX(), rect1.getY(),rect1.getWidth(), rect1.getHeight());
+                SSP1.setViewport(r1);
+                content.putImage(c1.snapshot(SSP1, null));
+                clipboard.setContent(content);
+ 
+            });
+            editMenu.getItems().add(copy);
+            
+            final Menu toolsMenu = new Menu("Tools");
+            myBar.getMenus().addAll(toolsMenu);
+            MenuItem selection = new MenuItem("Selection");
+            MenuItem pointer = new MenuItem("Pointer");
+            toolsMenu.getItems().add(selection);
+            toolsMenu.getItems().add(pointer);
+            
+            selection.setOnAction((ActionEvent e) -> {
+                
+                Rectangle rect2 = new Rectangle(0, 0);
+                rect2.setFill(Color.TRANSPARENT);
+                rect2.setStroke(Color.RED);
+                group1.getChildren().add(1, rect2);
+
+                c1.setCursor(Cursor.CROSSHAIR);
+ 
+            });
+            
+            pointer.setOnAction((ActionEvent e) -> {
+                
+                if(group1.getChildren().size() > 1){
+                    group1.getChildren().remove(1);
+                }
+                
+                c1.setCursor(Cursor.DEFAULT);
+ 
+            });
+            
+            return myBar;
+
+        }    
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        launch(args);
+    }
+    
+}
